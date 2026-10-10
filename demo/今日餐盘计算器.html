@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>麦麦健康省钱顾问 · 今日餐盘计算器</title>
+<style>
+  :root{
+    --red:#DA291C; --yellow:#FFC72C; --ink:#27251F; --bg:#F7F4EF;
+    --card:#FFFFFF; --line:#ECE6DC; --muted:#8A8378; --green:#2E7D32; --blue:#1565C0;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+    background:var(--bg); color:var(--ink); line-height:1.6; padding:24px}
+  .wrap{max-width:1100px;margin:0 auto}
+  header{background:linear-gradient(120deg,var(--red),#b71c1c); color:#fff; border-radius:18px;
+    padding:26px 30px; box-shadow:0 8px 24px rgba(218,41,28,.18); position:relative; overflow:hidden}
+  header h1{font-size:26px;letter-spacing:.5px}
+  header p{opacity:.92;margin-top:6px;font-size:14px}
+  .badge{position:absolute;right:20px;top:20px;background:var(--yellow);color:#3a2e00;
+    font-size:12px;padding:6px 12px;border-radius:999px;font-weight:700}
+  .grid{display:grid;grid-template-columns:1fr 1.15fr;gap:20px;margin-top:20px}
+  @media(max-width:880px){.grid{grid-template-columns:1fr}}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;
+    box-shadow:0 2px 10px rgba(0,0,0,.04)}
+  .card h2{font-size:16px;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+  .card h2::before{content:"";width:6px;height:18px;background:var(--red);border-radius:3px}
+  label{font-size:13px;color:var(--muted);display:block;margin:14px 0 6px;font-weight:600}
+  .seg{display:flex;gap:8px;flex-wrap:wrap}
+  .seg button{flex:1;min-width:80px;padding:9px 6px;border:1.5px solid var(--line);background:#fff;
+    border-radius:10px;cursor:pointer;font-size:13px;color:var(--ink);transition:.15s}
+  .seg button.on{background:var(--red);color:#fff;border-color:var(--red);font-weight:700}
+  select,input[type=text],input[type=number],textarea{width:100%;padding:10px 12px;border:1.5px solid var(--line);
+    border-radius:10px;font-size:14px;font-family:inherit;background:#fff;color:var(--ink)}
+  textarea{height:140px;resize:vertical;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+  .btn{padding:10px 16px;border:none;border-radius:10px;cursor:pointer;font-size:14px;font-weight:700;transition:.15s}
+  .btn-primary{background:var(--red);color:#fff}
+  .btn-primary:hover{background:#b71c1c}
+  .btn-ghost{background:#fff;color:var(--red);border:1.5px solid var(--red)}
+  .btn-soft{background:var(--yellow);color:#3a2e00}
+  .btn:disabled{opacity:.4;cursor:not-allowed}
+  .out{white-space:pre-wrap;font-size:14px;background:var(--bg);border:1px dashed var(--line);
+    border-radius:12px;padding:16px;max-height:620px;overflow:auto}
+  .out h3{color:var(--red);font-size:15px;margin:14px 0 6px}
+  .out .tag{display:inline-block;background:#fff3d6;color:#8a6d00;border:1px solid #ffe08a;
+    padding:2px 9px;border-radius:999px;font-size:12px;margin:3px 4px 0 0}
+  .meta{font-size:12px;color:var(--muted);margin-top:10px}
+  .note{font-size:12px;color:var(--muted);background:#fff8e6;border:1px solid #ffe7a8;
+    border-radius:10px;padding:10px 12px;margin-top:14px;line-height:1.5}
+  .pill{display:inline-block;background:#eee;border-radius:999px;padding:2px 10px;margin:2px;font-size:12px}
+  .sec{margin-top:10px;padding:12px 14px;background:var(--bg);border-radius:12px;border:1px solid var(--line)}
+  footer{margin-top:24px;font-size:12px;color:var(--muted);text-align:center;line-height:1.7}
+  .kpi{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+  .kpi div{flex:1;min-width:90px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center}
+  .kpi b{display:block;font-size:18px;color:var(--red)}
+  .kpi span{font-size:11px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="badge">第三方辅助 · 非官方</div>
+    <h1>🥗 麦麦健康省钱顾问 · 今日餐盘计算器</h1>
+    <p>粘贴麦当劳 MCP 三个工具返回的 JSON，设好目标，一键算出「今天怎么吃得健康又便宜」。</p>
+  </header>
+
+  <div class="grid">
+    <div class="card">
+      <h2>① 你的偏好</h2>
+      <div class="two">
+        <div>
+          <label>热量目标 (kcal)</label>
+          <input type="number" id="cal" value="600" min="100" step="10">
+        </div>
+        <div>
+          <label>预算 (¥，可选)</label>
+          <input type="number" id="budget" value="" min="0" step="1" placeholder="不限">
+        </div>
+      </div>
+      <label>忌口 / 偏好关键词（逗号分隔）</label>
+      <input type="text" id="avoid" placeholder="如：油炸,可乐,辣">
+
+      <h2 style="margin-top:18px">② 粘贴 MCP 数据</h2>
+      <label>把以下三个工具的返回贴在一起（或点「载入示例」）</label>
+      <textarea id="json" placeholder='{
+  "list-nutrition-foods": { "foods": [ {"name":"板烧鸡腿堡","energy":430,"protein":28,"fat":19,"carb":34,"sodium":980,"price":21} ] },
+  "available-coupons": { "coupons": [ {"name":"巨无霸套餐券","threshold":"满30","discount":"减12","validTo":"2026-10-31"} ] },
+  "campaign-calendar": { "campaigns": [ {"name":"周一会员日","status":"进行中","start":"2026-10-01","end":"2026-10-31"} ] }
+}'></textarea>
+
+      <div class="row">
+        <button class="btn btn-soft" id="loadSample">载入示例</button>
+        <button class="btn btn-primary" id="gen">算今日餐盘</button>
+        <button class="btn btn-ghost" id="clear">清空</button>
+      </div>
+      <div class="note">💡 数据完全在本地浏览器解析，不会上传。没有 Token 也能用「载入示例」体验完整分析。</div>
+    </div>
+
+    <div class="card">
+      <h2>③ 今日餐盘推荐</h2>
+      <div class="row" style="margin-top:0">
+        <button class="btn btn-ghost" id="copy">复制全文</button>
+        <button class="btn btn-ghost" id="expMd">导出 .md</button>
+        <button class="btn btn-ghost" id="expJson">导出 .json</button>
+      </div>
+      <div class="out" id="out">👈 设好左上方热量目标与忌口，粘贴 MCP 数据后点「算今日餐盘」。
+或先点「载入示例」看效果。</div>
+      <div class="meta" id="meta"></div>
+    </div>
+  </div>
+
+  <footer>
+    麦麦健康省钱顾问 · Mcd Healthy-Cheap Advisor ｜ 2026 麦当劳程序员创意开发大赛参赛作品<br>
+    本工具为第三方决策辅助，与麦当劳无官方关联；所有数据须来自麦当劳 MCP 真实返回，缺数据处标注「以门店/活动页实际为准」。
+  </footer>
+</div>
+
+<script>
+/* ---------- 示例数据（mock，仅演示，非真实优惠/价格） ---------- */
+const SAMPLE = {
+  "list-nutrition-foods": { "foods": [
+    {"name":"板烧鸡腿堡","energy":430,"protein":28,"fat":19,"carb":34,"sodium":980,"price":21},
+    {"name":"麦香鸡","energy":380,"protein":19,"fat":19,"carb":34,"sodium":720,"price":14},
+    {"name":"玉米杯(中)","energy":110,"protein":4,"fat":1.5,"carb":22,"sodium":10,"price":9},
+    {"name":"鲜煮咖啡(中)","energy":5,"protein":0.3,"fat":0,"carb":0.5,"sodium":5,"price":12},
+    {"name":"苹果片","energy":35,"protein":0.3,"fat":0.2,"carb":8,"sodium":2,"price":8},
+    {"name":"麦辣鸡翅(2块)","energy":290,"protein":18,"fat":19,"carb":12,"sodium":640,"price":13},
+    {"name":"那么大鸡排(板烧风味)","energy":460,"protein":30,"fat":28,"carb":22,"sodium":1100,"price":19},
+    {"name":"原味酸奶杯","energy":120,"protein":5,"fat":3.5,"carb":17,"sodium":70,"price":10}
+  ]},
+  "available-coupons": { "coupons": [
+    {"name":"巨无霸套餐券","threshold":"满30","discount":"减12","validTo":"2026-10-31"},
+    {"name":"麦辣鸡腿堡买一赠一","threshold":"无门槛","discount":"买1赠1","validTo":"2026-10-25"},
+    {"name":"拿铁咖啡半价券","threshold":"满15","discount":"5折","validTo":"2026-10-31"},
+    {"name":"早餐满20减6","threshold":"满20","discount":"减6","validTo":"2026-10-31"}
+  ]},
+  "campaign-calendar": { "campaigns": [
+    {"name":"1024 程序员节 · M-Code 主题活动","status":"进行中","start":"2026-10-24","end":"2026-10-26","type":"节日主题"},
+    {"name":"麦麦省 · 周一会员日","status":"进行中","start":"2026-10-01","end":"2026-10-31","type":"优惠"},
+    {"name":"金拱门早餐卡返场","status":"未来","start":"2026-11-01","end":"2026-11-30","type":"会员"}
+  ]}
+};
+
+/* ---------- 工具函数 ---------- */
+const num = (v,d=1)=> (typeof v==='number' && !isNaN(v)) ? v.toFixed(d) : '—';
+function fEnergy(f){return f.energy??f.calorie??f.kcal??0;}
+function fProtein(f){return f.protein??0;}
+function fFat(f){return f.fat??0;}
+function fCarb(f){return f.carbohydrate??f.carb??0;}
+function fSodium(f){return f.sodium??0;}
+function fPrice(f){return (typeof f.price==='number')?f.price:null;}
+
+/* 解析优惠：返回 {saving, final, label} 或 null（不适用） */
+function applyCoupon(comboPrice, c){
+  if(comboPrice==null) return null; // 无单价无法精确算
+  const thr = (c.threshold||'').toString();
+  let need=0;
+  const m = thr.match(/满\s*(\d+)/);
+  if(m) need = +m[1];
+  if(comboPrice < need) return null; // 未达门槛
+  const disc = (c.discount||'').toString();
+  if(/减\s*(\d+)/.test(disc)){ const x=+disc.match(/减\s*(\d+)/)[1]; return {saving:x, final:Math.max(0,comboPrice-x), label:c.name+'（减'+x+'）'}; }
+  if(/(\d+)\s*折/.test(disc)){ const x=+disc.match(/(\d+)\s*折/)[1]; const fin=+(comboPrice*x/10).toFixed(1); return {saving:+(comboPrice-fin).toFixed(1), final:fin, label:c.name+'（'+x+'折）'}; }
+  if(/买\s*(\d+)\s*赠\s*(\d+)/.test(disc)){ return {saving:0, final:comboPrice, label:c.name+'（买赠，需按量）', buyGift:true}; }
+  return null;
+}
+function bestCoupon(comboPrice, coupons){
+  let best=null;
+  (coupons||[]).forEach(c=>{
+    const r=applyCoupon(comboPrice,c);
+    if(r && (best===null || r.saving>best.saving)) best=r;
+  });
+  return best;
+}
+
+/* ---------- 解析输入 ---------- */
+function parseInput(raw){
+  const d={foods:[],coupons:[],campaigns:[]};
+  if(raw["list-nutrition-foods"]&&Array.isArray(raw["list-nutrition-foods"].foods)) d.foods=raw["list-nutrition-foods"].foods;
+  else if(Array.isArray(raw.foods)) d.foods=raw.foods;
+  if(raw["available-coupons"]&&Array.isArray(raw["available-coupons"].coupons)) d.coupons=raw["available-coupons"].coupons;
+  else if(Array.isArray(raw.coupons)) d.coupons=raw.coupons;
+  if(raw["campaign-calendar"]&&Array.isArray(raw["campaign-calendar"].campaigns)) d.campaigns=raw["campaign-calendar"].campaigns;
+  else if(Array.isArray(raw.campaigns)) d.campaigns=raw.campaigns;
+  return d;
+}
+
+/* ---------- 生成组合并评分 ---------- */
+function buildCombos(foods, target, avoidKw){
+  const kw = avoidKw.split(/[,，]/).map(s=>s.trim()).filter(Boolean);
+  const ok = foods.filter(f=>{
+    const nm=(f.name||'').toString();
+    return !kw.some(k=>nm.includes(k));
+  });
+  const combos=[];
+  // 单品
+  ok.forEach(f=>combos.push([f]));
+  // 双拼
+  for(let i=0;i<ok.length;i++) for(let j=i+1;j<ok.length;j++) combos.push([ok[i],ok[j]]);
+  const gate = target*1.1;
+  const scored=[];
+  combos.forEach(arr=>{
+    const cal=arr.reduce((s,f)=>s+fEnergy(f),0);
+    if(cal>gate) return;
+    if(cal<=0) return;
+    const pro=arr.reduce((s,f)=>s+fProtein(f),0);
+    const fat=arr.reduce((s,f)=>s+fFat(f),0);
+    const carb=arr.reduce((s,f)=>s+fCarb(f),0);
+    const sod=arr.reduce((s,f)=>s+fSodium(f),0);
+    const price=arr.reduce((s,f)=>{const p=fPrice(f);return p==null?s:p+s;}, null);
+    const hasPrice = price!=null;
+    const cp = bestCoupon(price, /*coupons injected later*/ null);
+    const density = pro/cal;
+    // 营养分
+    const N = Math.min(density/0.12,1)*100;
+    // 热量适配分
+    const C = Math.max(0, 1-Math.abs(cal-target)/target)*100;
+    scored.push({arr,cal,pro,fat,carb,sod,price,hasPrice,density,N,C});
+  });
+  return scored;
+}
+
+/* ---------- 主流程 ---------- */
+function generate(){
+  const raw=document.getElementById('json').value.trim();
+  const target=Math.max(1, +document.getElementById('cal').value||600);
+  const budgetRaw=document.getElementById('budget').value.trim();
+  const budget=budgetRaw? (+budgetRaw):null;
+  const avoid=document.getElementById('avoid').value.trim();
+  let data={foods:[],coupons:[],campaigns:[]};
+  if(raw){
+    try{ data=parseInput(JSON.parse(raw)); }
+    catch(e){ document.getElementById('out').textContent='❌ JSON 解析失败：'+e.message; return; }
+  }
+  if(!data.foods.length){
+    document.getElementById('out').textContent='⚠️ 未解析到 list-nutrition-foods 的 foods 数据。请确认 JSON 结构（参考占位示例）。';
+    return;
+  }
+  // 评分（不含券，券在排序时套用）
+  let scored = buildCombos(data.foods, target, avoid);
+  // 套券 + 预算过滤 + 综合分
+  scored.forEach(s=>{
+    const cp = bestCoupon(s.price, data.coupons);
+    s.coupon = cp;
+    s.saving = cp? cp.saving : 0;
+    s.final = cp? cp.final : s.price;
+    // 省钱分（无单价给基线 60，有券额外加分）
+    let M;
+    if(!s.hasPrice) M = (cp?60:40);
+    else M = Math.min(s.saving/15,1)*100;
+    s.M=M;
+    s.score = s.N*0.5 + s.C*0.3 + s.M*0.2;
+  });
+  // 预算过滤
+  let filtered = scored;
+  if(budget!=null){
+    filtered = scored.filter(s=>{
+      if(s.hasPrice) return (s.final!=null? s.final : s.price) <= budget;
+      return true; // 无单价不卡预算
+    });
+  }
+  filtered.sort((a,b)=>b.score-a.score);
+  const top = filtered.slice(0,3);
+
+  // 今日进行中活动
+  const today = new Date();
+  const y=today.getFullYear(), m=String(today.getMonth()+1).padStart(2,'0'), d=String(today.getDate()).padStart(2,'0');
+  const todayStr = y+'-'+m+'-'+d;
+  const active = (data.campaigns||[]).filter(c=> (c.status==='进行中') );
+
+  // 组装输出
+  const L=[];
+  L.push('🥗 今日餐盘推荐（热量目标 '+target+' kcal'+(budget!=null?(' ｜ 预算 ¥'+budget):'')+'）');
+  L.push('');
+  if(!top.length){
+    L.push('⚠️ 没有符合热量目标的组合，试着放宽热量目标或去掉忌口关键词。');
+  } else {
+    const tags=['综合最优','最省钱','最清爽'];
+    top.forEach((s,i)=>{
+      L.push('🍽 第 '+(i+1)+' 套 · '+(tags[i]||'备选'));
+      L.push('   餐品：'+s.arr.map(f=>f.name).join(' + '));
+      L.push('   营养：热量 '+num(s.cal,0)+' kcal ｜ 蛋白 '+num(s.pro,1)+' g ｜ 脂肪 '+num(s.fat,1)+' g ｜ 碳水 '+num(s.carb,1)+' g');
+      if(s.hasPrice){
+        L.push('   价格：原价 ¥'+num(s.price,1)+ (s.coupon? (' ｜ 券「'+s.coupon.label+'」｜ 到手 ¥'+num(s.final,1)+' ｜ 省 ¥'+num(s.saving,1)) : ' ｜ 暂无可叠加券'));
+      } else {
+        L.push('   省钱提示：'+(s.coupon? ('可叠加「'+s.coupon.label+'」') : '本次无单价数据，建议先在 App 领券后再算；或关注常驻活动'));
+      }
+      // 点评
+      let why='高蛋白低卡，正好卡在目标内。';
+      if(s.density>=0.10) why='高蛋白低密度，健身/控糖友好。';
+      if(s.saving>0) why+=' 叠加券后到手 ¥'+num(s.final,1)+'，性价比拉满。';
+      if(active.length) why+=' 今日有进行中活动可叠加。';
+      L.push('   点评：'+why);
+      L.push('');
+    });
+  }
+  // 活动区块
+  L.push('📅 今日进行中活动（据 campaign-calendar）');
+  if(active.length){
+    active.forEach(c=>L.push('   • '+c.name+'（'+(fmtMD(c.start))+'–'+(fmtMD(c.end))+'，'+c.status+'）'));
+    L.push('   > 以上活动可与可用券叠加，以门店实际参与为准。');
+  } else {
+    L.push('   • 今日无进行中活动（或数据未返回）。');
+  }
+  L.push('');
+  L.push('——');
+  L.push('据麦当劳 MCP 公开数据生成，营养/优惠以门店与活动页实际为准；本工具为第三方辅助，非官方推荐。');
+
+  document.getElementById('out').textContent=L.join('\n');
+  document.getElementById('meta').textContent='候选组合 '+scored.length+' 个 ｜ 通过筛选 '+filtered.length+' 个 ｜ 餐品 '+data.foods.length+' ｜ 券 '+data.coupons.length+' ｜ 活动 '+data.campaigns.length+' 条';
+}
+function fmtMD(s){return (s||'').slice(5).replace(/-/,'/');}
+
+/* ---------- UI ---------- */
+document.getElementById('loadSample').onclick=()=>{
+  document.getElementById('json').value=JSON.stringify(SAMPLE,null,2);
+};
+document.getElementById('clear').onclick=()=>{
+  document.getElementById('json').value='';
+  document.getElementById('out').textContent='已清空。';
+  document.getElementById('meta').textContent='';
+};
+document.getElementById('gen').onclick=generate;
+document.getElementById('copy').onclick=()=>{
+  navigator.clipboard.writeText(document.getElementById('out').textContent).then(()=>alert('已复制全文到剪贴板 ✅'));
+};
+document.getElementById('expMd').onclick=()=>download('今日餐盘推荐.md', document.getElementById('out').textContent, 'text/markdown');
+document.getElementById('expJson').onclick=()=>{
+  const data={target:+document.getElementById('cal').value, avoid:document.getElementById('avoid').value, result:document.getElementById('out').textContent};
+  download('今日餐盘推荐.json', JSON.stringify(data,null,2), 'application/json');
+};
+function download(name,content,type){
+  const blob=new Blob([content],{type});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();
+  URL.revokeObjectURL(a.href);
+}
+</script>
+</body>
+</html>
